@@ -2,7 +2,7 @@ import tkinter as tk
 from tkinter import ttk
 import csv
 import tkinter.messagebox as messagebox
-
+import re
 #============================#
 
 #Adding student to the csv
@@ -16,9 +16,22 @@ def add_student():
     course_code = Coursecd_ent.get()
 
     if id_number and last_name and first_name and middle_name and yearlvl and gender and course_code:
+        # Validate ID number format
+        if not re.match(r'^\d{4}-\d{4}$', id_number):
+            messagebox.showerror("Invalid ID Number Format", "ID number must be in the format '0000-0000'.")
+            return
+
+    if id_number and last_name and first_name and middle_name and yearlvl and gender and course_code:
         if course_code not in course_codes:
             messagebox.showerror("Course Not Found", f"The course code '{course_code}' was not found.")
             return
+        
+        with open('students.csv', 'r') as file:
+            reader = csv.reader(file)
+            for row in reader:
+                if row and row[0] == id_number:
+                    messagebox.showerror("ID Number Already Exists", f"The ID number '{id_number}' already exists.")
+                    return
         
         with open('students.csv', 'a', newline='') as file:
             writer = csv.writer(file)
@@ -26,6 +39,9 @@ def add_student():
 
         clear_entries()
         update_student_table()
+
+    else:
+        messagebox.showerror("Missing Information", "Please fill in all fields.")
 
 #Removing a student record
 def delete_student():
@@ -42,7 +58,6 @@ def update_student():
         for item in selected_item:
             student_id = student_table.item(item, 'values')[0]
             update_student_window(student_id)
-
 
 def update_student_window(student_id):
     with open('students.csv', 'r') as file:
@@ -78,7 +93,6 @@ def update_student_table():
     except IndexError:
         print("Index out of range.")
 
-
 def update_student_csv():
     with open('students.csv', 'w', newline='') as file:
         writer = csv.writer(file)
@@ -97,13 +111,11 @@ def clear_entries():
     gender_ent.set('')
     Coursecd_ent.delete(0, tk.END)
 
-
 def on_student_select(event):
     selected_item = student_table.selection()
     if selected_item:
         selected_id = student_table.item(selected_item)['values'][0]  
         print("Selected student ID:", selected_id)
-
 
 course_codes = []
 
@@ -112,10 +124,20 @@ courses_csv_filename = 'courses.csv'
 
 def load_course_codes():
     global course_codes
-    with open(courses_csv_filename, 'r') as file:
-        reader = csv.reader(file)
-        for row in reader:
-            course_codes.append(row[0])
+    course_codes = []  # Clear the existing course codes list
+    try:
+        with open(courses_csv_filename, 'r') as file:
+            reader = csv.reader(file)
+            for row_number, row in enumerate(reader, start=1):
+                try:
+                    if row:  # Check if the row is not empty
+                        course_codes.append(row[0])  # Append the course code to the list
+                except IndexError:
+                    print(f"Error loading course code from row {row_number}: {row}")
+    except FileNotFoundError:
+        print("Courses CSV file not found.")
+    except Exception as e:
+        print("Error loading course codes:", e)
 
 load_course_codes()
 
@@ -154,6 +176,9 @@ def delete_course():
             load_course_codes()
             
             delCoursecd_ent.delete(0, tk.END)
+            delCoursecd_ent.insert(0, "Enter Course Code")  # Initial message
+            delCoursetitle_ent.delete(0, tk.END)
+            delCoursetitle_ent.insert(0, "Enter Course Title")  # Initial message
         except Exception as e:
             print("Error deleting course:", e)
 
@@ -174,12 +199,10 @@ def search_student():
     else:
         messagebox.showinfo("Search", "Please enter an ID number to search for.")
 
-
 def refresh_table():
     load_course_codes()
     update_student_table()
 #============================#
-
 #=======GUI==========#
 win = tk.Tk()
 win.geometry("800x580+360+130")
@@ -248,26 +271,59 @@ Coursecd_ent.grid(row=6, column=1, padx=2, pady=2)
 Coursecd_ent['values'] = course_codes
 
 
-addCoursecd_lbl = tk.Label(addcourse_frame, text="Course Code", font=('Arial', 9, "bold"), bg="#455864")
-addCoursecd_lbl.grid(row=0, column=1, padx=2, pady=2)
-
+#addCoursecd_lbl = tk.Label(addcourse_frame, text="Course Code", font=('Arial', 9, "bold"), bg="#455864")
+#addCoursecd_lbl.grid(row=0, column=1, padx=2, pady=2)
 addCoursecd_ent = tk.Entry(addcourse_frame, bd=7, font=('Arial', 9))
-addCoursecd_ent.grid(row=1, column=1, padx=2, pady=2)
+addCoursecd_ent.grid(row=0, column=0, columnspan=2, padx=2, pady=2)
+addCoursecd_ent.insert(0, "Enter Course Code")  # Initial message
+
+def on_add_course_focus_in(event):
+    if addCoursecd_ent.get() == "Enter Course Code":
+        addCoursecd_ent.delete(0, tk.END)
+
+addCoursecd_ent.bind("<FocusIn>", on_add_course_focus_in)
+
+addCoursetitle_ent = tk.Entry(addcourse_frame, bd=7, font=('Arial', 9))
+addCoursetitle_ent.grid(row=1, column=0, columnspan=2, padx=2, pady=2)
+addCoursetitle_ent.insert(0, "Enter Course Title")  # Initial message
+
+def on_add_title_focus_in(event):
+    if addCoursetitle_ent.get() == "Enter Course Title":
+        addCoursetitle_ent.delete(0, tk.END)
+
+addCoursetitle_ent.bind("<FocusIn>", on_add_title_focus_in)
+
 save_btn = tk.Button(addcourse_frame, bg="#455864", text="Save", bd=5, font=("Arial", 8, "bold"), width=6)
-save_btn.grid(row=1, column=3, padx=2, pady=2)
+save_btn.grid(row=0, column=3, padx=2, pady=2)
 save_btn.config(command=save_course)
 
 
-delCoursecd_lbl = tk.Label(deletecourse_frame, text="Course Code", font=('Arial', 9, "bold"), bg="#455864")
-delCoursecd_lbl.grid(row=0, column=1, padx=2, pady=2)
-
+#delCoursecd_lbl = tk.Label(deletecourse_frame, text="Course Code", font=('Arial', 9, "bold"), bg="#455864")
+#delCoursecd_lbl.grid(row=0, column=1, padx=2, pady=2)
 delCoursecd_ent = tk.Entry(deletecourse_frame, bd=7, font=('Arial', 9))
-delCoursecd_ent.grid(row=1, column=1, padx=2, pady=2)
+delCoursecd_ent.grid(row=0, column=0, columnspan=2, padx=2, pady=2)
+delCoursecd_ent.insert(0, "Enter Course Code")  # Initial message
+
+def on_del_course_focus_in(event):
+    if delCoursecd_ent.get() == "Enter Course Code":
+        delCoursecd_ent.delete(0, tk.END)
+
+delCoursecd_ent.bind("<FocusIn>", on_del_course_focus_in)
+
+delCoursetitle_ent = tk.Entry(deletecourse_frame, bd=7, font=('Arial', 9))
+delCoursetitle_ent.grid(row=1, column=0, columnspan=2, padx=2, pady=2)
+delCoursetitle_ent.insert(0, "Enter Course Title")  # Initial message
+
+def on_del_title_focus_in(event):
+    if delCoursetitle_ent.get() == "Enter Course Title":
+        delCoursetitle_ent.delete(0, tk.END)
+
+delCoursetitle_ent.bind("<FocusIn>", on_del_title_focus_in)
+
 del_btn = tk.Button(deletecourse_frame, bg="#455864", text="Save", bd=5, font=("Arial", 8, "bold"), width=6)
-del_btn.grid(row=1, column=3, padx=2, pady=2)
+del_btn.grid(row=0, column=3, padx=2, pady=2)
 del_btn.config(command=delete_course)
 # ===============#
-
 # ====Buttons====#
 btn_frame = tk.Frame(detail_frame, bg="#455864", bd=5, relief=tk.GROOVE)
 btn_frame.place(x=8, y=380, width=237, height=45)  
@@ -288,7 +344,6 @@ clear_btn = tk.Button(btn_frame, bg="#455864", text="Clear", bd=5, font=("Arial"
 clear_btn.grid(row=0, column=3, padx=3, pady=2)
 clear_btn.config(command=clear_entries)
 # ===============#
-
 
 # ====SEARCHING====#
 
