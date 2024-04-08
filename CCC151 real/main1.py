@@ -152,7 +152,10 @@ def save_course():
 
             load_course_codes()
 
-            addCoursecd_ent.delete(0, tk.END)
+            addCoursecd_ent.delete(0, tk.END)  
+            addCoursecd_ent.insert(0, "Enter Course Code")  
+            addCoursetitle_ent.delete(0, tk.END)  
+            addCoursetitle_ent.insert(0, "Enter Course Title")  
         except Exception as e:
             print("Error saving course:", e)
 
@@ -175,10 +178,10 @@ def delete_course():
             
             load_course_codes()
             
-            delCoursecd_ent.delete(0, tk.END)
-            delCoursecd_ent.insert(0, "Enter Course Code")  # Initial message
-            delCoursetitle_ent.delete(0, tk.END)
-            delCoursetitle_ent.insert(0, "Enter Course Title")  # Initial message
+            delCoursecd_ent.delete(0, tk.END)  
+            delCoursecd_ent.insert(0, "Enter Course Code")  
+            delCoursetitle_ent.delete(0, tk.END)  
+            delCoursetitle_ent.insert(0, "Enter Course Title")  
         except Exception as e:
             print("Error deleting course:", e)
 
@@ -271,8 +274,6 @@ Coursecd_ent.grid(row=6, column=1, padx=2, pady=2)
 Coursecd_ent['values'] = course_codes
 
 
-#addCoursecd_lbl = tk.Label(addcourse_frame, text="Course Code", font=('Arial', 9, "bold"), bg="#455864")
-#addCoursecd_lbl.grid(row=0, column=1, padx=2, pady=2)
 addCoursecd_ent = tk.Entry(addcourse_frame, bd=7, font=('Arial', 9))
 addCoursecd_ent.grid(row=0, column=0, columnspan=2, padx=2, pady=2)
 addCoursecd_ent.insert(0, "Enter Course Code")  # Initial message
@@ -298,8 +299,6 @@ save_btn.grid(row=0, column=3, padx=2, pady=2)
 save_btn.config(command=save_course)
 
 
-#delCoursecd_lbl = tk.Label(deletecourse_frame, text="Course Code", font=('Arial', 9, "bold"), bg="#455864")
-#delCoursecd_lbl.grid(row=0, column=1, padx=2, pady=2)
 delCoursecd_ent = tk.Entry(deletecourse_frame, bd=7, font=('Arial', 9))
 delCoursecd_ent.grid(row=0, column=0, columnspan=2, padx=2, pady=2)
 delCoursecd_ent.insert(0, "Enter Course Code")  # Initial message
