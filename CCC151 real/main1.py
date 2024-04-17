@@ -143,21 +143,28 @@ load_course_codes()
 
 def save_course():
     course_code = addCoursecd_ent.get()
-    print("Course code to save:", course_code)  
     if course_code:
         try:
             with open('courses.csv', 'a', newline='') as file:
                 writer = csv.writer(file)
-                writer.writerow([course_code])
+                # Check if the course code already exists
+                if course_code in course_codes:
+                    messagebox.showinfo("Course Exists", f"The course '{course_code}' already exists.")
+                else:
+                    writer.writerow([course_code])
+                    messagebox.showinfo("Course Added", f"The course '{course_code}' was added successfully!")
 
             load_course_codes()
 
-            addCoursecd_ent.delete(0, tk.END)  
-            addCoursecd_ent.insert(0, "Enter Course Code")  
-            addCoursetitle_ent.delete(0, tk.END)  
-            addCoursetitle_ent.insert(0, "Enter Course Title")  
+            # Clear entry fields after adding course
+            addCoursecd_ent.delete(0, tk.END)
+            addCoursecd_ent.insert(0, "Enter Course Code")
+            addCoursetitle_ent.delete(0, tk.END)
+            addCoursetitle_ent.insert(0, "Enter Course Title")
         except Exception as e:
-            print("Error saving course:", e)
+            messagebox.showerror("Error", f"Error saving course: {e}")
+    else:
+        messagebox.showerror("Error", "Please enter a course code.")
 
 #delete course
 def delete_course():
@@ -414,6 +421,39 @@ student_table.pack(fill=tk.BOTH, expand=True)
 
 student_table.bind("<ButtonRelease-1>", on_student_select)
 update_student_table()
+
+def open_view_courses_dialog():
+    dialog_window = tk.Toplevel(win)
+    dialog_window.title("Available Courses")
+
+    try:
+        with open('courses.csv', 'r') as file:
+            reader = csv.reader(file)
+            courses = [row[0] for row in reader]  
+    except FileNotFoundError:
+        courses = []
+
+    #display the courses
+    listbox = tk.Listbox(dialog_window, font=("Arial", 12), selectmode=tk.SINGLE)
+    listbox.pack(padx=20, pady=10)
+
+    for course in courses:
+        listbox.insert(tk.END, course)
+
+    def edit_course():
+        selected_index = listbox.curselection()
+        if selected_index:
+            selected_course = listbox.get(selected_index)
+            new_course_code = simpledialog.askstring("Edit Course", "Enter new course code:", parent=dialog_window)
+            if new_course_code:
+                listbox.delete(selected_index)
+                listbox.insert(selected_index, new_course_code)
+                update_course_in_csv(selected_course, new_course_code)
+                update_student_courses(selected_course, new_course_code)
+                messagebox.showinfo("Success", "Course updated successfully!")
+
+    edit_button = tk.Button(dialog_window, text="Edit", command=edit_course)
+    edit_button.pack(pady=10)
 
 # ===================#
 
